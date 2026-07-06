@@ -1,0 +1,192 @@
+/* --- Variables & Reset --- */
+:root {
+    --bg-color: #0f172a;
+    --card-bg: #1e293b;
+    --accent-color: #6366f1;
+    --text-color: #f8fafc;
+    --text-muted: #94a3b8;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    padding: 20px;
+    padding-bottom: 100px; /* Espace pour le FAB */
+}
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+/* --- Grille de Films (Mobile First) --- */
+.movies-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 20px;
+    justify-items: center;
+}
+
+/* --- Container pour la perspective 3D --- */
+.card-perspective {
+    perspective: 1000px;
+    width: 140px;
+    height: 210px; /* Ratio ~2:3 pour les affiches */
+}
+
+/* --- La Carte Animée --- */
+/* --- La Carte Animée (Ajustée) --- */
+/* --- La Carte Animée (Nettoyée et Fixée) --- */
+.movie-card {
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    border-radius: 12px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+    transition: transform 0.05s ease, box-shadow 0.05s ease;
+    will-change: transform;
+    touch-action: none;
+    position: relative; /* Pour positionner le flare à l'intérieur */
+    overflow: hidden;    /* Empêche le flare de dépasser des bords arrondis */
+}
+
+/* --- NOUVEAU : Le reflet lumineux (Flare) --- */
+.card-flare {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    
+    /* Le dégradé simulant la lumière :
+       Un centre blanc très doux (rgba(255,255,255,0.8)) qui devient transparent rapidement */
+    background: radial-gradient(
+        circle at 50% 50%, 
+        rgba(255, 255, 255, 0.8) 0%, 
+        rgba(255, 255, 255, 0.05) 50%, 
+        transparent 80%
+    );
+    
+    opacity: 0; /* Invisible par défaut */
+    transition: opacity 0.15s ease; /* Transition douce pour l'apparition/disparition */
+    pointer-events: none; /* Laisse passer les clics/taps vers la carte */
+    z-index: 1; /* S'assure qu'il est au-dessus de l'image de fond */
+}
+
+/* --- Bouton Flottant (FAB) --- */
+.fab {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 56px;
+    height: 56px;
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 28px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    z-index: 10;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* --- Modales --- */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+}
+
+.modal.hidden {
+    display: none;
+}
+
+.modal-content {
+    background-color: var(--card-bg);
+    padding: 24px;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 400px;
+    max-height: 85vh;
+    overflow-y: auto;
+    position: relative;
+}
+
+.close-btn {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+/* --- Formulaires & Boutons --- */
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+.form-group input, .form-group textarea {
+    width: 100%;
+    padding: 10px;
+    background-color: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    color: white;
+    font-size: 16px; /* Évite le zoom automatique sur iOS */
+}
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+}
+.btn.danger { 
+    background-color: #ef4444; 
+    color: white; 
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+}
+
+.btn.danger:active {
+    background-color: #dc2626; /* Devient un peu plus foncé lors du clic */
+}
+
+.btn.primary { background-color: var(--accent-color); color: white; }
+.btn.secondary { background-color: #334155; color: white; }

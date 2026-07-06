@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MaMédiathèque</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1>Mes Films</h1>
+    </header>
+
+    <main id="movies-container" class="movies-grid"></main>
+
+    <button id="fab-add" class="fab" aria-label="Ajouter un film">+</button>
+
+    <div id="form-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>Ajouter un film</h2>
+            <form id="movie-form">
+                <div class="form-group">
+                    <label for="title">Titre</label>
+                    <input type="text" id="title" required>
+                </div>
+                <div class="form-group">
+                    <label for="image">URL de l'image (Affiche)</label>
+                    <input type="url" id="image" placeholder="https://..." required>
+                </div>
+                <div class="form-group">
+                    <label for="rating">Note (/5)</label>
+                    <input type="number" id="rating" min="0" max="5" step="0.5" required>
+                </div>
+                <div class="form-group">
+                    <label for="date">Date de visionnage</label>
+                    <input type="date" id="date" required>
+                </div>
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description" rows="4" required></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" id="btn-cancel" class="btn secondary">Annuler</button>
+                    <button type="submit" class="btn primary">Sauvegarder</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="details-modal" class="modal hidden">
+        <div class="modal-content">
+            <span id="close-details" class="close-btn">&times;</span>
+            <div id="movie-details-content">
+                </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
