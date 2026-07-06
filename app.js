@@ -9,9 +9,11 @@ const movieForm = document.getElementById('movie-form');
 const btnCancel = document.getElementById('btn-cancel');
 const closeDetails = document.getElementById('close-details');
 const movieDetailsContent = document.getElementById('movie-details-content');
+const btnToggleView = document.getElementById('btn-toggle-view'); // Nouveau sélecteur
 
 // --- État de l'application ---
-let currentCategory = 'movies'; // Catégorie active par défaut
+let currentCategory = 'movies'; 
+let currentView = 'grid'; // Mode de vue par défaut : 'grid' ou 'carousel'
 let movies = JSON.parse(localStorage.getItem('movies')) || [];
 let pressTimer;
 
@@ -23,14 +25,15 @@ function saveMovies() {
 function renderMovies() {
     moviesContainer.innerHTML = '';
     
-    // NOUVEAU : On filtre le tableau pour n'afficher que la catégorie active
-    // (Note : On garde la condition "|| !movie.category" pour ne pas perdre vos anciens films déjà stockés)
+    if (currentView === 'carousel') {
+        moviesContainer.classList.add('carousel-mode');
+    } else {
+        moviesContainer.classList.remove('carousel-mode');
+    }
+
     const filteredMovies = movies.filter(movie => movie.category === currentCategory || (!movie.category && currentCategory === 'movies'));
 
     filteredMovies.forEach((movie) => {
-        // ATTENTION : Puisque le tableau est filtré, l'index de la boucle .forEach 
-        // ne correspond plus à l'index réel dans le tableau global 'movies'.
-        // On récupère donc l'index d'origine pour que la suppression et les détails fonctionnent toujours.
         const realIndex = movies.indexOf(movie);
 
         const perspectiveDiv = document.createElement('div');
@@ -39,7 +42,7 @@ function renderMovies() {
         const card = document.createElement('div');
         card.className = 'movie-card';
         card.style.backgroundImage = `url('${movie.image}')`;
-        card.dataset.index = realIndex; // Utilise l'index réel global
+        card.dataset.index = realIndex;
 
         const flare = document.createElement('div');
         flare.className = 'card-flare';
@@ -47,30 +50,55 @@ function renderMovies() {
 
         let isMoving = false;
 
-        card.addEventListener('touchstart', () => { 
-            isMoving = false; 
-        }, { passive: true });
-
+        card.addEventListener('touchstart', () => { isMoving = false; }, { passive: true });
         card.addEventListener('touchmove', (e) => {
             if (e.cancelable) e.preventDefault(); 
             isMoving = true;
             handleTouchMove(e, card);
         }, { passive: false });
-
         card.addEventListener('touchend', () => {
             resetCardTransform(card);
             setTimeout(() => { isMoving = false; }, 50);
         });
         
         card.addEventListener('click', () => {
-            if (!isMoving) {
-                showMovieDetails(realIndex); // Utilise l'index réel global
-            }
+            if (!isMoving) { showMovieDetails(realIndex); }
         });
 
         perspectiveDiv.appendChild(card);
         moviesContainer.appendChild(perspectiveDiv);
     });
+
+    // --- NOUVEAU : Initialiser l'Observer si on est en mode Carrousel ---
+    if (currentView === 'carousel') {
+        initCarouselObserver();
+    }
+}
+
+function initCarouselObserver() {
+    // Si l'observer existe déjà sur la fenêtre, on nettoie (optionnel mais propre)
+    if (window.carouselObserver) window.carouselObserver.disconnect();
+
+    // Configuration de l'observer : On cible une zone verticale stricte au milieu de l'écran
+    const options = {
+        root: moviesContainer,
+        rootMargin: '0px -45% 0px -45%', // Réduit la zone de détection à une ligne centrale de 10% de l'écran
+        threshold: 0
+    };
+
+    window.carouselObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('active-card');
+            } else {
+                entry.target.classList.remove('active-card');
+            }
+        });
+    }, options);
+
+    // On attache l'observer sur le wrapper de perspective de chaque carte
+    const cards = moviesContainer.querySelectorAll('.card-perspective');
+    cards.forEach(card => window.carouselObserver.observe(card));
 }
 
 // --- Calcul de l'effet 3D (Tilt) et de la LUMIÈRE sur Mobile ---
@@ -78,7 +106,6 @@ function handleTouchMove(e, card) {
     const touch = e.touches[0];
     const rect = card.getBoundingClientRect();
     
-    // Position confinée
     const x = touch.clientX - rect.left;
     const y = touch.clientY - rect.top;
     const boundedX = Math.max(0, Math.min(x, rect.width));
@@ -94,7 +121,6 @@ function handleTouchMove(e, card) {
     card.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.05)`;
     card.style.boxShadow = `${-rotateY * 2}px ${rotateX * 2}px 25px rgba(0,0,0,0.6)`;
 
-    // Gestion de la lumière (Flare)
     const flare = card.querySelector('.card-flare');
     if (flare) {
         const flareX = (boundedX / rect.width) * 100;
@@ -132,12 +158,7 @@ function openRadialMenu() {
         } else {
             child.classList.remove('hidden-cat');
             
-            // --- AJUSTEMENTS POUR ESPACER LES BOUTONS ---
-            // On augmente l'écart à 30 degrés entre chaque bouton
-            // Le premier bouton commencera à 180° (gauche parfaite)
             const angle = (visibleIndex * 30) + 180; 
-            
-            // On pousse le rayon à 110px (au lieu de 95px) pour les éloigner
             const radius = 110; 
             
             const x = Math.cos((angle * Math.PI) / 180) * radius;
@@ -182,7 +203,6 @@ function showMovieDetails(index) {
         <button id="btn-delete-movie" class="btn danger" style="width: 100%;">Supprimer ce film</button>
     `;
 
-    // Gestion de la suppression
     const btnDelete = document.getElementById('btn-delete-movie');
     btnDelete.addEventListener('click', () => {
         if (confirm(`Voulez-vous vraiment supprimer "${movie.title}" ?`)) {
@@ -197,7 +217,6 @@ function showMovieDetails(index) {
 }
 
 // --- Événements Formulaire ---
-// --- Événements Formulaire ---
 movieForm.addEventListener('submit', (e) => {
     e.preventDefault();
     
@@ -207,7 +226,7 @@ movieForm.addEventListener('submit', (e) => {
         rating: document.getElementById('rating').value,
         date: document.getElementById('date').value,
         description: document.getElementById('description').value,
-        category: currentCategory // <-- NOUVEAU : On marque l'item avec la catégorie en cours ('movies', etc.)
+        category: currentCategory
     };
 
     movies.push(newMovie);
@@ -218,7 +237,7 @@ movieForm.addEventListener('submit', (e) => {
     formModal.classList.add('hidden');
 });
 
-// --- Écouteurs d'Événements du Menu & Fenêtre ---
+// --- Écouteurs d'Événements Glogaux ---
 fabMain.addEventListener('mousedown', startPress);
 fabMain.addEventListener('touchstart', startPress, { passive: true });
 window.addEventListener('mouseup', cancelPress);
@@ -230,7 +249,18 @@ document.addEventListener('click', (e) => {
     }
 });
 
-// Changement dynamique de catégorie
+// Gestion du bouton de bascule d'affichage (Grid VS Carousel)
+btnToggleView.addEventListener('click', () => {
+    if (currentView === 'grid') {
+        currentView = 'carousel';
+        btnToggleView.innerText = '☰';
+    } else {
+        currentView = 'grid';
+        btnToggleView.innerText = '📱';
+    }
+    renderMovies();
+});
+
 // Changement dynamique de catégorie
 fabContainer.querySelectorAll('.category-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -245,11 +275,10 @@ fabContainer.querySelectorAll('.category-btn').forEach(btn => {
         document.querySelector('header h1').innerText = titles[currentCategory];
         
         closeRadialMenu();
-        renderMovies(); // <-- NOUVEAU : On rafraîchit la grille avec le nouveau filtre !
+        renderMovies();
     });
 });
 
-// Actions sur les boutons du menu
 fabAdd.addEventListener('click', () => {
     formModal.classList.remove('hidden');
     closeRadialMenu();
