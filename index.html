@@ -14,8 +14,15 @@
 
     <main id="movies-container" class="movies-grid"></main>
 
-    <button id="fab-add" class="fab" aria-label="Ajouter un film">+</button>
-
+<div id="fab-container" class="fab-container">
+        <button id="fab-add" class="fab-child" aria-label="Ajouter un élément" data-action="add">+</button>
+        <button class="fab-child category-btn" data-cat="movies" aria-label="Films">🎬</button>
+        <button class="fab-child category-btn" data-cat="games" aria-label="Jeux vidéo">🎮</button>
+        <button class="fab-child category-btn" data-cat="music" aria-label="Musique">🎵</button>
+        <button class="fab-child category-btn" data-cat="books" aria-label="Livres">📚</button>
+        
+        <button id="fab-main" class="fab-main" aria-label="Menu principal">≡</button>
+    </div>
     <div id="form-modal" class="modal hidden">
         <div class="modal-content">
             <h2>Ajouter un film</h2>

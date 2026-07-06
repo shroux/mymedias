@@ -21,6 +21,73 @@ body {
     padding-bottom: 100px; /* Espace pour le FAB */
 }
 
+.fab-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 56px;
+    height: 56px;
+    z-index: 1000;
+}
+
+/* --- Bouton Principal Maître --- */
+.fab-main {
+    width: 56px;
+    height: 56px;
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 24px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    z-index: 1002;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: transform 0.2s ease;
+}
+
+.fab-container.open .fab-main {
+    transform: rotate(90deg); /* Effet sympa sur le bouton lors de l'ouverture */
+}
+
+/* --- Sous-boutons Radiaux (Enfants) --- */
+.fab-child {
+    position: absolute;
+    width: 48px;
+    height: 48px;
+    bottom: 4px;
+    right: 4px;
+    border-radius: 50%;
+    border: none;
+    background-color: #1e293b;
+    color: white;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1001;
+    transform: scale(0); /* Caché au centre par défaut */
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Effet rebond */
+}
+
+/* Style unique pour le bouton d'ajout "+" dans le radial */
+#fab-add {
+    background-color: #10b981; /* Vert pour l'action d'ajout */
+    font-size: 24px;
+}
+
+/* Règle pour masquer la catégorie courante */
+.fab-child.hidden-cat {
+    display: none !important;
+}
+
 header {
     text-align: center;
     margin-bottom: 30px;
