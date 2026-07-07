@@ -24,7 +24,7 @@ const formGroupDateEnd = document.getElementById('form-group-date-end');
 
 // --- État de l'application ---
 let currentCategory = 'movies'; 
-let currentView = 'grid'; 
+let currentView = 'grid'; // Cycle des vues : 'grid' -> 'carousel' -> 'timeline'
 let movies = JSON.parse(localStorage.getItem('movies')) || []; 
 let pressTimer;
 
@@ -36,24 +36,21 @@ function saveMovies() {
 function renderMovies() {
     moviesContainer.innerHTML = '';
     
+    // Nettoyage et application des classes de vue fixes
+    moviesContainer.classList.remove('carousel-mode', 'timeline-mode');
     if (currentView === 'carousel') {
         moviesContainer.classList.add('carousel-mode');
-    } else {
-        moviesContainer.classList.remove('carousel-mode');
+    } else if (currentView === 'timeline') {
+        moviesContainer.classList.add('timeline-mode');
     }
 
-    // 1. On filtre par catégorie comme avant
+    // Filtrage par catégorie
     const filteredMovies = movies.filter(movie => movie.category === currentCategory || (!movie.category && currentCategory === 'movies'));
 
-    // 2. NOUVEAU : On trie du plus récent au plus ancien en fonction de la date
-    filteredMovies.sort((a, b) => {
-        return new Date(b.date) - new Date(a.date);
-    });
+    // Tri chronologique : le plus récent en premier (à gauche)
+    filteredMovies.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-    // 3. On génère le HTML pour chaque élément trié
     filteredMovies.forEach((movie) => {
-        // On récupère toujours l'index réel global dans le tableau 'movies' 
-        // pour que la suppression et les détails pointent sur le bon objet.
         const realIndex = movies.indexOf(movie);
 
         const perspectiveDiv = document.createElement('div');
@@ -72,8 +69,19 @@ function renderMovies() {
         flare.className = 'card-flare';
         card.appendChild(flare); 
 
-        let isMoving = false;
+        // --- NOUVEAU : Création des éléments réels de la Timeline ---
+        const timelineLine = document.createElement('div');
+        timelineLine.className = 'timeline-line';
 
+        const timelineDot = document.createElement('div');
+        timelineDot.className = 'timeline-dot';
+
+        const dateBadge = document.createElement('span');
+        dateBadge.className = 'timeline-date-badge';
+        dateBadge.innerText = new Date(movie.date).toLocaleDateString('fr-FR');
+        // -------------------------------------------------------------
+
+        let isMoving = false;
         card.addEventListener('touchstart', () => { isMoving = false; }, { passive: true });
         card.addEventListener('touchmove', (e) => {
             if (e.cancelable) e.preventDefault(); 
@@ -84,19 +92,24 @@ function renderMovies() {
             resetCardTransform(card);
             setTimeout(() => { isMoving = false; }, 50);
         });
-        
         card.addEventListener('click', () => {
-            if (!isMoving) {
-                showMovieDetails(realIndex);
-            }
+            if (!isMoving) { showMovieDetails(realIndex); }
         });
 
+        // --- NOUVEL ORDRE D'IMBRICATION ---
+        card.appendChild(dateBadge); // Le badge va DANS la carte pour utiliser ses dimensions
+        
         perspectiveDiv.appendChild(card);
+        perspectiveDiv.appendChild(timelineLine);
+        perspectiveDiv.appendChild(timelineDot);
+        
         moviesContainer.appendChild(perspectiveDiv);
     });
 
     if (currentView === 'carousel') {
         initCarouselObserver();
+    } else if (window.carouselObserver) {
+        window.carouselObserver.disconnect(); // Désactive l'observer si on quitte le carrousel
     }
 }
 
@@ -141,7 +154,7 @@ function resetCardTransform(card) {
     }
 }
 
-// --- Détection de la carte centrale (Focus) ---
+// --- Détection de la carte centrale (Focus du Carrousel) ---
 function initCarouselObserver() {
     if (window.carouselObserver) window.carouselObserver.disconnect();
 
@@ -248,7 +261,7 @@ function setupFormFields() {
         formGroupDateEnd.classList.remove('hidden-field');
         document.getElementById('artist').required = true;
 
-    } else { // Mode par défaut : Movies
+    } else { 
         modalTitleDynamic.innerText = "Ajouter un film";
         labelTitle.innerText = "Titre";
         labelImage.innerText = "URL de l'image (Affiche)";
@@ -310,7 +323,7 @@ movieForm.addEventListener('submit', (e) => {
     };
 
     if (currentCategory === 'music' || currentCategory === 'games' || currentCategory === 'books') {
-        newItem.artist = document.getElementById('artist').value; // Sert d'Auteur pour les livres
+        newItem.artist = document.getElementById('artist').value; 
     }
     if (currentCategory === 'music' || currentCategory === 'games') {
         newItem.year = document.getElementById('year').value;
@@ -340,10 +353,14 @@ document.addEventListener('click', (e) => {
     if (!fabContainer.contains(e.target)) closeRadialMenu();
 });
 
+// Gestion cyclique de la bascule d'affichage à 3 états
 btnToggleView.addEventListener('click', () => {
     if (currentView === 'grid') {
         currentView = 'carousel';
         btnToggleView.innerText = '☰';
+    } else if (currentView === 'carousel') {
+        currentView = 'timeline';
+        btnToggleView.innerText = '⏳';
     } else {
         currentView = 'grid';
         btnToggleView.innerText = '📱';

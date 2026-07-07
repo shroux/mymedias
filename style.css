@@ -364,3 +364,158 @@ header {
     width: 140px;
     height: 210px;
 }
+
+.movies-grid.timeline-mode {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    align-items: center;
+    
+    position: fixed;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+    width: 100vw;
+    height: 600px; /* Augmenté pour éviter que les cartes sortent de l'écran à 140px */
+    margin: 0;
+    padding: 0 calc(50vw - 70px);
+    gap: 120px;
+    
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    z-index: 5;
+}
+
+/* La ligne centrale violette */
+.movies-grid.timeline-mode::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: max-content;
+    min-width: 100%;
+    height: 4px;
+    background-color: var(--accent-color);
+    box-shadow: 0 0 10px var(--accent-color);
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* Structure du nœud de la timeline (Sert d'ancre absolue sur la frise) */
+.timeline-mode .card-perspective {
+    position: relative;
+    flex: 0 0 140px;
+    z-index: 2;
+    height: 4px; /* Aligné sur l'épaisseur de la frise centrale */
+}
+
+/* Positionnement absolu des cartes (Vos valeurs à 140px) */
+.timeline-mode .card-perspective:nth-child(odd) .movie-card {
+    position: absolute;
+    bottom: 140px; 
+    left: 0;
+}
+
+.timeline-mode .card-perspective:nth-child(even) .movie-card {
+    position: absolute;
+    top: 140px; 
+    left: 0;
+}
+
+/* --- La Ligne de rappel verticale (Ajustée à 140px) --- */
+.timeline-line {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    z-index: 2;
+    pointer-events: none;
+}
+/* Elle part du centre (0) et rejoint la carte à 140px */
+.timeline-mode .card-perspective:nth-child(odd) .timeline-line {
+    bottom: 4px;
+    height: 136px;
+    background: linear-gradient(to top, var(--accent-color), transparent);
+}
+.timeline-mode .card-perspective:nth-child(even) .timeline-line {
+    top: 4px;
+    height: 136px;
+    background: linear-gradient(to bottom, var(--accent-color), transparent);
+}
+
+/* --- Le Point HTML (Verrouillé au centre exact) --- */
+.timeline-dot {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    background-color: #ffffff;
+    border: 3px solid var(--accent-color);
+    border-radius: 50%;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%); /* Centrage mathématique parfait */
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+    z-index: 10; /* Augmenté pour passer au-dessus de la frise et de la ligne */
+    pointer-events: none;
+}
+
+/* --- Le badge de Date HTML --- */
+/* --- Le badge de Date HTML (Repositionné sous la carte) --- */
+.timeline-date-badge {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%); /* Centre parfaitement la date sous la carte */
+    background-color: var(--card-bg);
+    border: 1px solid #334155;
+    color: var(--text-color); /* Un peu plus blanc pour une meilleure lecture */
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    z-index: 9;
+    pointer-events: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* Alignement pour les items impairs (Carte en HAUT, la date va sous la carte à la frise) */
+.timeline-mode .card-perspective:nth-child(odd) .timeline-date-badge {
+    /* La carte finit à -140px. Sa hauteur est de 210px (ou 140px pour la musique). 
+       On la place pile à la base inférieure de la carte */
+    bottom: 0px; 
+    top: auto;
+}
+
+/* Si c'est un album de musique en HAUT (hauteur 140px au lieu de 210px), on remonte la date */
+.timeline-mode .card-perspective:nth-child(odd).music-card-size .timeline-date-badge {
+    bottom: 180px;
+}
+
+/* Alignement pour les items pairs (Carte en BAS, la date se place sous la carte) */
+.timeline-mode .card-perspective:nth-child(even) .timeline-date-badge {
+    /* La carte commence à +140px. Sa hauteur est de 210px. 
+       On pousse la date à 360px pour la mettre juste en dessous */
+    top: 0px;
+    bottom: auto;
+}
+
+/* Si c'est un album de musique en BAS (hauteur 140px), on remonte la date */
+.timeline-mode .card-perspective:nth-child(even).music-card-size .timeline-date-badge {
+    top: 290px;
+}
+/* 1. Par défaut, on cache le badge partout dans l'application */
+.timeline-date-badge {
+    display: none;
+}
+
+/* 2. On l'affiche UNIQUEMENT quand le conteneur est en mode timeline */
+.timeline-mode .timeline-date-badge {
+    display: block !important;
+}
+
+/* 3. On conserve le masquage normal pour les points et les lignes */
+:not(.timeline-mode) .timeline-dot,
+:not(.timeline-mode) .timeline-line {
+    display: none;
+}
