@@ -27,6 +27,7 @@ let currentCategory = 'movies';
 let currentView = 'grid'; // 'grid' ou 'carousel'
 let movies = JSON.parse(localStorage.getItem('movies')) || []; 
 let pressTimer;
+let editingIndex = null;
 
 // --- Fonctions de Stockage & Rendu ---
 function saveMovies() {
@@ -67,6 +68,24 @@ function renderMovies() {
         flare.className = 'card-flare';
         card.appendChild(flare); 
 
+        // --- NEW: Subtle Date Label Generation ---
+        const dateLabel = document.createElement('div');
+        dateLabel.className = 'card-date-subtitle';
+        
+        const formattedDate = new Date(movie.date).toLocaleDateString('fr-FR', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric'
+        });
+
+        let prefix = 'Vu le';
+        if (movie.category === 'music') prefix = 'Écouté le';
+        if (movie.category === 'games') prefix = 'Lancé le';
+        if (movie.category === 'books') prefix = 'Lu le';
+
+        dateLabel.innerText = `${prefix} ${formattedDate}`;
+        // ----------------------------------------
+
         let isMoving = false;
 
         card.addEventListener('touchstart', () => { isMoving = false; }, { passive: true });
@@ -87,6 +106,7 @@ function renderMovies() {
         });
 
         perspectiveDiv.appendChild(card);
+        perspectiveDiv.appendChild(dateLabel); // Append the label below the card inside perspective wrapper
         moviesContainer.appendChild(perspectiveDiv);
     });
 
@@ -110,7 +130,7 @@ function handleTouchMove(e, card) {
     const px = (boundedX / rect.width) - 0.5;
     const py = (boundedY / rect.height) - 0.5;
     
-    const maxTilt = 15; 
+    const maxTilt = 25; 
     const rotateX = -py * maxTilt;
     const rotateY = px * maxTilt;
     
@@ -278,8 +298,37 @@ function showMovieDetails(index) {
         ${(isGame || isBook) && item.dateEnd ? `<p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;"><strong>Fini le :</strong> ${new Date(item.dateEnd).toLocaleDateString('fr-FR')}</p>` : ''}
         
         <p style="margin-bottom: 24px; line-height: 1.5;">${item.description}</p>
-        <button id="btn-delete-movie" class="btn danger" style="width: 100%;">Supprimer cet élément</button>
+        
+        <!-- Updated Action Buttons Group -->
+        <div style="display: flex; gap: 12px; margin-top: 16px;">
+            <button id="btn-edit-movie" class="btn secondary" style="flex: 1;">Modifier</button>
+            <button id="btn-delete-movie" class="btn danger" style="flex: 1;">Supprimer</button>
+        </div>
     `;
+
+    // Trigger Edit Mode
+    document.getElementById('btn-edit-movie').addEventListener('click', () => {
+        editingIndex = index; // Store index to signal update instead of append
+        setupFormFields();
+        
+        // Pre-populate form values
+        document.getElementById('title').value = item.title || '';
+        document.getElementById('image').value = item.image || '';
+        document.getElementById('rating').value = item.rating || '';
+        document.getElementById('date').value = item.date || '';
+        document.getElementById('description').value = item.description || '';
+        
+        if (document.getElementById('artist')) document.getElementById('artist').value = item.artist || '';
+        if (document.getElementById('year')) document.getElementById('year').value = item.year || '';
+        if (document.getElementById('platform')) document.getElementById('platform').value = item.platform || '';
+        if (document.getElementById('date-end')) document.getElementById('date-end').value = item.dateEnd || '';
+
+        // Dynamically change modal title for feedback
+        modalTitleDynamic.innerText = modalTitleDynamic.innerText.replace("Ajouter", "Modifier");
+
+        detailsModal.classList.add('hidden');
+        formModal.classList.remove('hidden');
+    });
 
     document.getElementById('btn-delete-movie').addEventListener('click', () => {
         if (confirm(`Voulez-vous vraiment supprimer cet élément ?`)) {
@@ -297,7 +346,7 @@ function showMovieDetails(index) {
 movieForm.addEventListener('submit', (e) => {
     e.preventDefault();
     
-    const newItem = {
+    const updatedItem = {
         title: document.getElementById('title').value,
         image: document.getElementById('image').value,
         rating: document.getElementById('rating').value,
@@ -307,19 +356,27 @@ movieForm.addEventListener('submit', (e) => {
     };
 
     if (currentCategory === 'music' || currentCategory === 'games' || currentCategory === 'books') {
-        newItem.artist = document.getElementById('artist').value; 
+        updatedItem.artist = document.getElementById('artist').value; 
     }
     if (currentCategory === 'music' || currentCategory === 'games') {
-        newItem.year = document.getElementById('year').value;
+        updatedItem.year = document.getElementById('year').value;
     }
     if (currentCategory === 'games') {
-        newItem.platform = document.getElementById('platform').value;
+        updatedItem.platform = document.getElementById('platform').value;
     }
     if (currentCategory === 'games' || currentCategory === 'books') {
-        newItem.dateEnd = document.getElementById('date-end').value;
+        updatedItem.dateEnd = document.getElementById('date-end').value;
     }
 
-    movies.push(newItem);
+    if (editingIndex !== null) {
+        // Edit mode: replace the old object details directly
+        movies[editingIndex] = updatedItem;
+        editingIndex = null; // Clear edit tracking state
+    } else {
+        // Create mode
+        movies.push(updatedItem);
+    }
+
     saveMovies();
     renderMovies();
     
@@ -367,6 +424,8 @@ fabContainer.querySelectorAll('.category-btn').forEach(btn => {
 });
 
 fabAdd.addEventListener('click', () => {
+    editingIndex = null; // Ensure we are creating, not editing
+    movieForm.reset();   // Clear any leftover data from edits
     setupFormFields();
     formModal.classList.remove('hidden');
     closeRadialMenu();

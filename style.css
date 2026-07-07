@@ -51,7 +51,7 @@ header {
 .movies-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 20px;
+    gap: 25px;
     justify-items: center;
 }
 
@@ -255,8 +255,8 @@ header {
 
 .close-btn {
     position: absolute;
-    top: 12px;
-    right: 16px;
+    top: 2px;
+    right: 10px;
     font-size: 24px;
     cursor: pointer;
 }
@@ -302,10 +302,16 @@ header {
     border-radius: 8px;
     font-size: 16px;
     cursor: pointer;
+    transition: background-color 0.15s ease, opacity 0.15s ease; /* Smooth visual tap */
 }
+
 
 .btn.primary { background-color: var(--accent-color); color: white; }
 .btn.secondary { background-color: #334155; color: white; }
+
+.btn.secondary:active {
+    background-color: #475569;
+}
 
 .btn.danger { 
     background-color: #ef4444; 
@@ -315,4 +321,46 @@ header {
 }
 .btn.danger:active {
     background-color: #dc2626;
+}
+
+/* --- Subtle Date Subtitles --- */
+.card-date-subtitle {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+}
+
+/* Make room for the subtitle inside the grid layout wrappers */
+.movies-grid:not(.carousel-mode) .card-perspective {
+    height: 235px; /* Increased from 210px to accommodate text */
+}
+
+.movies-grid:not(.carousel-mode) .card-perspective.music-card-size {
+    height: 165px; /* Increased from 140px to accommodate text */
+}
+
+/* Specific behaviors for the Carousel layout */
+.carousel-mode .card-perspective {
+    height: 240px; /* Increased from 210px */
+}
+
+.carousel-mode .card-perspective.music-card-size {
+    height: 170px; /* Increased from 140px */
+}
+
+/* Only show the date vividly on the focused/active carousel card */
+.carousel-mode .card-perspective:not(.active-card) .card-date-subtitle {
+    opacity: 0;
+}
+
+.carousel-mode .card-perspective.active-card .card-date-subtitle {
+    opacity: 1;
+    transform: scale(0.8); /* Counteracts the parent 1.25x scaling slightly so text stays sharp */
 }
