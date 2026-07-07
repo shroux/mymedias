@@ -21,6 +21,142 @@ body {
     padding-bottom: 100px; /* Espace pour le FAB */
 }
 
+/* --- Header & Bouton de Bascule --- */
+header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+    min-height: 50px;
+}
+
+.view-toggle-btn {
+    position: absolute;
+    right: 0;
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    border: 1px solid #334155;
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.view-toggle-btn:hover {
+    background-color: #334155;
+}
+
+/* --- 1. Mode Grille par Défaut --- */
+.movies-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 20px;
+    justify-items: center;
+}
+
+/* Container de perspective standard */
+.movies-grid:not(.carousel-mode) .card-perspective {
+    perspective: 1000px;
+    width: 140px;
+    height: 210px; /* Ratio ~2:3 (Films, Jeux, Livres) */
+}
+
+/* Format CD (Musique) en mode Grille */
+.movies-grid:not(.carousel-mode) .card-perspective.music-card-size {
+    width: 140px;
+    height: 140px; /* Carré parfait */
+}
+
+/* --- La Carte Animée --- */
+.movie-card {
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    border-radius: 12px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+    transition: transform 0.05s ease, box-shadow 0.05s ease;
+    will-change: transform;
+    touch-action: none;
+    position: relative; 
+}
+
+/* Le reflet lumineux (Flare) */
+.card-flare {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(
+        circle at 50% 50%, 
+        rgba(255, 255, 255, 0.8) 0%, 
+        rgba(255, 255, 255, 0.05) 50%, 
+        transparent 80%
+    );
+    opacity: 0; 
+    transition: opacity 0.15s ease; 
+    pointer-events: none; 
+    z-index: 1; 
+}
+
+
+/* --- 2. Mode Carrousel Horizontal --- */
+.movies-grid.carousel-mode {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    align-items: center; 
+    
+    position: fixed;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+    width: 100vw;
+    height: 350px; 
+    margin: 0;
+    padding: 0 calc(50vw - 70px) 60px calc(50vw - 70px); 
+    gap: 50px;
+    
+    scroll-behavior: smooth;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    z-index: 5;
+}
+
+.carousel-mode .card-perspective {
+    scroll-snap-align: center;
+    flex: 0 0 140px;
+    height: 210px;
+    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.carousel-mode .card-perspective.music-card-size {
+    flex: 0 0 140px;
+    height: 140px;
+}
+
+/* Zoom Focus Carrousel */
+.carousel-mode .card-perspective.active-card {
+    transform: scale(1.25);
+    z-index: 10;
+}
+
+/* Reflet Miroir Carrousel */
+.carousel-mode .movie-card {
+    -webkit-box-reflect: below 15px linear-gradient(transparent 60%, rgba(0, 0, 0, 0.2));
+}
+
+/* Masquage barre de défilement Carrousel */
+.movies-grid.carousel-mode::-webkit-scrollbar { display: none; }
+.movies-grid.carousel-mode { -ms-overflow-style: none; scrollbar-width: none; }
+
+
+/* --- Système du Menu Flottant Radial (FAB) --- */
 .fab-container {
     position: fixed;
     bottom: 24px;
@@ -30,7 +166,6 @@ body {
     z-index: 1000;
 }
 
-/* --- Bouton Principal Maître --- */
 .fab-main {
     width: 56px;
     height: 56px;
@@ -45,6 +180,8 @@ body {
     align-items: center;
     justify-content: center;
     position: absolute;
+    bottom: 0;
+    right: 0;
     z-index: 1002;
     user-select: none;
     -webkit-user-select: none;
@@ -52,10 +189,9 @@ body {
 }
 
 .fab-container.open .fab-main {
-    transform: rotate(90deg); /* Effet sympa sur le bouton lors de l'ouverture */
+    transform: rotate(90deg);
 }
 
-/* --- Sous-boutons Radiaux (Enfants) --- */
 .fab-child {
     position: absolute;
     width: 48px;
@@ -73,103 +209,19 @@ body {
     align-items: center;
     justify-content: center;
     z-index: 1001;
-    transform: scale(0); /* Caché au centre par défaut */
-    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Effet rebond */
+    transform: scale(0);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-/* Style unique pour le bouton d'ajout "+" dans le radial */
 #fab-add {
-    background-color: #10b981; /* Vert pour l'action d'ajout */
+    background-color: #10b981;
     font-size: 24px;
 }
 
-/* Règle pour masquer la catégorie courante */
 .fab-child.hidden-cat {
     display: none !important;
 }
 
-header {
-    text-align: center;
-    margin-bottom: 30px;
-}
-
-/* --- Grille de Films (Mobile First) --- */
-.movies-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 20px;
-    justify-items: center;
-}
-
-/* --- Container pour la perspective 3D --- */
-.card-perspective {
-    perspective: 1000px;
-    width: 140px;
-    height: 210px; /* Ratio ~2:3 pour les affiches */
-}
-
-/* --- La Carte Animée --- */
-/* --- La Carte Animée (Ajustée) --- */
-/* --- La Carte Animée (Nettoyée et Fixée) --- */
-.movie-card {
-    width: 100%;
-    height: 100%;
-    background-size: cover;
-    background-position: center;
-    border-radius: 12px;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
-    cursor: pointer;
-    transform-style: preserve-3d;
-    backface-visibility: hidden;
-    transition: transform 0.05s ease, box-shadow 0.05s ease;
-    will-change: transform;
-    touch-action: none;
-    position: relative; /* Pour positionner le flare à l'intérieur */
-    overflow: hidden;    /* Empêche le flare de dépasser des bords arrondis */
-}
-
-/* --- NOUVEAU : Le reflet lumineux (Flare) --- */
-.card-flare {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    
-    /* Le dégradé simulant la lumière :
-       Un centre blanc très doux (rgba(255,255,255,0.8)) qui devient transparent rapidement */
-    background: radial-gradient(
-        circle at 50% 50%, 
-        rgba(255, 255, 255, 0.8) 0%, 
-        rgba(255, 255, 255, 0.05) 50%, 
-        transparent 80%
-    );
-    
-    opacity: 0; /* Invisible par défaut */
-    transition: opacity 0.15s ease; /* Transition douce pour l'apparition/disparition */
-    pointer-events: none; /* Laisse passer les clics/taps vers la carte */
-    z-index: 1; /* S'assure qu'il est au-dessus de l'image de fond */
-}
-
-/* --- Bouton Flottant (FAB) --- */
-.fab {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    width: 56px;
-    height: 56px;
-    background-color: var(--accent-color);
-    color: white;
-    border: none;
-    border-radius: 50%;
-    font-size: 28px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
-    z-index: 10;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
 
 /* --- Modales --- */
 .modal {
@@ -183,7 +235,7 @@ header {
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 100;
+    z-index: 1100;
 }
 
 .modal.hidden {
@@ -209,9 +261,14 @@ header {
     cursor: pointer;
 }
 
-/* --- Formulaires & Boutons --- */
+
+/* --- Formulaires & Configuration --- */
 .form-group {
     margin-bottom: 16px;
+}
+
+.form-group.hidden-field {
+    display: none;
 }
 
 .form-group label {
@@ -228,7 +285,7 @@ header {
     border: 1px solid #334155;
     border-radius: 8px;
     color: white;
-    font-size: 16px; /* Évite le zoom automatique sur iOS */
+    font-size: 16px; 
 }
 
 .form-actions {
@@ -237,6 +294,8 @@ header {
     justify-content: flex-end;
 }
 
+
+/* --- Boutons --- */
 .btn {
     padding: 10px 20px;
     border: none;
@@ -244,278 +303,16 @@ header {
     font-size: 16px;
     cursor: pointer;
 }
+
+.btn.primary { background-color: var(--accent-color); color: white; }
+.btn.secondary { background-color: #334155; color: white; }
+
 .btn.danger { 
     background-color: #ef4444; 
     color: white; 
     font-weight: 500;
     transition: background-color 0.2s ease;
 }
-
 .btn.danger:active {
-    background-color: #dc2626; /* Devient un peu plus foncé lors du clic */
-}
-
-.btn.primary { background-color: var(--accent-color); color: white; }
-.btn.secondary { background-color: #334155; color: white; }
-
-/* --- Bouton de bascule dans le Header --- */
-header {
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-bottom: 30px;
-    min-height: 50px;
-}
-
-.view-toggle-btn {
-    position: absolute;
-    right: 0;
-    background-color: var(--card-bg);
-    color: var(--text-color);
-    border: 1px solid #334155;
-    padding: 8px 14px;
-    border-radius: 20px;
-    font-size: 14px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-.view-toggle-btn:hover {
-    background-color: #334155;
-}
-
-/* --- Mode Carrousel Horizontal --- */
-.movies-grid.carousel-mode {
-    display: flex;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    align-items: center; /* Centrage vertical de la grille */
-    
-    /* Centrage horizontal et vertical absolu dans le viewport */
-    position: fixed;
-    top: 50%;
-    left: 0;
-    transform: translateY(-50%);
-    width: 100vw;
-    height: 350px; /* Hauteur suffisante pour accueillir la carte zoomée + son reflet */
-    
-    margin: 0;
-    /* Paddings importants pour que la première et dernière carte puissent se centrer sur l'écran */
-    padding: 0 calc(50vw - 70px) 60px calc(50vw - 70px); 
-    gap: 50px; /* Plus d'espace pour gérer le zoom sans chevauchement */
-    
-    scroll-behavior: smooth;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
-    z-index: 5;
-}
-
-/* Modifie le comportement du mode Grille pour annuler le mode Carrousel fixe */
-.movies-grid:not(.carousel-mode) {
-    position: static;
-    transform: none;
-    width: auto;
-    height: auto;
-    padding: 0;
-}
-
-/* Ajustement des containers de perspective en mode carrousel */
-.carousel-mode .card-perspective {
-    scroll-snap-align: center;
-    flex: 0 0 140px;
-    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1); /* Transition smooth pour le zoom */
-}
-
-/* --- Effet de Focus (Zoom sur l'élément au centre) --- */
-.carousel-mode .card-perspective.active-card {
-    transform: scale(1.25); /* L'élément central devient plus grand */
-    z-index: 10; /* Passe au-dessus si jamais ça frôle les autres */
-}
-
-/* --- Effet de Reflet (Ajusté pour le zoom) --- */
-.carousel-mode .movie-card {
-    -webkit-box-reflect: below 15px linear-gradient(transparent 60%, rgba(0, 0, 0, 0.2));
-}
-
-/* Masquage des barres de défilement */
-.movies-grid.carousel-mode::-webkit-scrollbar { display: none; }
-.movies-grid.carousel-mode { -ms-overflow-style: none; scrollbar-width: none; }
-
-/* Permet de masquer/afficher dynamiquement les champs du formulaire */
-.form-group.hidden-field {
-    display: none;
-}
-
-/* --- Format CD (1:1) pour la musique --- */
-/* En mode Grille */
-.movies-grid:not(.carousel-mode) .card-perspective.music-card-size {
-    width: 140px;
-    height: 140px; /* Devient un carré parfait */
-}
-
-/* En mode Carrousel */
-.carousel-mode .card-perspective.music-card-size {
-    flex: 0 0 140px;
-    height: 140px; /* Devient un carré parfait */
-}
-/* --- Format Affiche standard (Films et Jeux) --- */
-.movies-grid:not(.carousel-mode) .card-perspective:not(.music-card-size) {
-    width: 140px;
-    height: 210px;
-}
-
-.movies-grid.timeline-mode {
-    display: flex;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    align-items: center;
-    
-    position: fixed;
-    top: 50%;
-    left: 0;
-    transform: translateY(-50%);
-    width: 100vw;
-    height: 600px; /* Augmenté pour éviter que les cartes sortent de l'écran à 140px */
-    margin: 0;
-    padding: 0 calc(50vw - 70px);
-    gap: 120px;
-    
-    scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch;
-    z-index: 5;
-}
-
-/* La ligne centrale violette */
-.movies-grid.timeline-mode::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: max-content;
-    min-width: 100%;
-    height: 4px;
-    background-color: var(--accent-color);
-    box-shadow: 0 0 10px var(--accent-color);
-    z-index: 1;
-    pointer-events: none;
-}
-
-/* Structure du nœud de la timeline (Sert d'ancre absolue sur la frise) */
-.timeline-mode .card-perspective {
-    position: relative;
-    flex: 0 0 140px;
-    z-index: 2;
-    height: 4px; /* Aligné sur l'épaisseur de la frise centrale */
-}
-
-/* Positionnement absolu des cartes (Vos valeurs à 140px) */
-.timeline-mode .card-perspective:nth-child(odd) .movie-card {
-    position: absolute;
-    bottom: 140px; 
-    left: 0;
-}
-
-.timeline-mode .card-perspective:nth-child(even) .movie-card {
-    position: absolute;
-    top: 140px; 
-    left: 0;
-}
-
-/* --- La Ligne de rappel verticale (Ajustée à 140px) --- */
-.timeline-line {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 2px;
-    z-index: 2;
-    pointer-events: none;
-}
-/* Elle part du centre (0) et rejoint la carte à 140px */
-.timeline-mode .card-perspective:nth-child(odd) .timeline-line {
-    bottom: 4px;
-    height: 136px;
-    background: linear-gradient(to top, var(--accent-color), transparent);
-}
-.timeline-mode .card-perspective:nth-child(even) .timeline-line {
-    top: 4px;
-    height: 136px;
-    background: linear-gradient(to bottom, var(--accent-color), transparent);
-}
-
-/* --- Le Point HTML (Verrouillé au centre exact) --- */
-.timeline-dot {
-    position: absolute;
-    width: 14px;
-    height: 14px;
-    background-color: #ffffff;
-    border: 3px solid var(--accent-color);
-    border-radius: 50%;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%); /* Centrage mathématique parfait */
-    box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
-    z-index: 10; /* Augmenté pour passer au-dessus de la frise et de la ligne */
-    pointer-events: none;
-}
-
-/* --- Le badge de Date HTML --- */
-/* --- Le badge de Date HTML (Repositionné sous la carte) --- */
-.timeline-date-badge {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%); /* Centre parfaitement la date sous la carte */
-    background-color: var(--card-bg);
-    border: 1px solid #334155;
-    color: var(--text-color); /* Un peu plus blanc pour une meilleure lecture */
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 11px;
-    font-weight: 600;
-    white-space: nowrap;
-    z-index: 9;
-    pointer-events: none;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-}
-
-/* Alignement pour les items impairs (Carte en HAUT, la date va sous la carte à la frise) */
-.timeline-mode .card-perspective:nth-child(odd) .timeline-date-badge {
-    /* La carte finit à -140px. Sa hauteur est de 210px (ou 140px pour la musique). 
-       On la place pile à la base inférieure de la carte */
-    bottom: 0px; 
-    top: auto;
-}
-
-/* Si c'est un album de musique en HAUT (hauteur 140px au lieu de 210px), on remonte la date */
-.timeline-mode .card-perspective:nth-child(odd).music-card-size .timeline-date-badge {
-    bottom: 180px;
-}
-
-/* Alignement pour les items pairs (Carte en BAS, la date se place sous la carte) */
-.timeline-mode .card-perspective:nth-child(even) .timeline-date-badge {
-    /* La carte commence à +140px. Sa hauteur est de 210px. 
-       On pousse la date à 360px pour la mettre juste en dessous */
-    top: 0px;
-    bottom: auto;
-}
-
-/* Si c'est un album de musique en BAS (hauteur 140px), on remonte la date */
-.timeline-mode .card-perspective:nth-child(even).music-card-size .timeline-date-badge {
-    top: 290px;
-}
-/* 1. Par défaut, on cache le badge partout dans l'application */
-.timeline-date-badge {
-    display: none;
-}
-
-/* 2. On l'affiche UNIQUEMENT quand le conteneur est en mode timeline */
-.timeline-mode .timeline-date-badge {
-    display: block !important;
-}
-
-/* 3. On conserve le masquage normal pour les points et les lignes */
-:not(.timeline-mode) .timeline-dot,
-:not(.timeline-mode) .timeline-line {
-    display: none;
+    background-color: #dc2626;
 }

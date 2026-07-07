@@ -24,7 +24,7 @@ const formGroupDateEnd = document.getElementById('form-group-date-end');
 
 // --- État de l'application ---
 let currentCategory = 'movies'; 
-let currentView = 'grid'; // Cycle des vues : 'grid' -> 'carousel' -> 'timeline'
+let currentView = 'grid'; // 'grid' ou 'carousel'
 let movies = JSON.parse(localStorage.getItem('movies')) || []; 
 let pressTimer;
 
@@ -36,18 +36,16 @@ function saveMovies() {
 function renderMovies() {
     moviesContainer.innerHTML = '';
     
-    // Nettoyage et application des classes de vue fixes
-    moviesContainer.classList.remove('carousel-mode', 'timeline-mode');
     if (currentView === 'carousel') {
         moviesContainer.classList.add('carousel-mode');
-    } else if (currentView === 'timeline') {
-        moviesContainer.classList.add('timeline-mode');
+    } else {
+        moviesContainer.classList.remove('carousel-mode');
     }
 
     // Filtrage par catégorie
     const filteredMovies = movies.filter(movie => movie.category === currentCategory || (!movie.category && currentCategory === 'movies'));
 
-    // Tri chronologique : le plus récent en premier (à gauche)
+    // Tri chronologique : le plus récent en premier
     filteredMovies.sort((a, b) => new Date(b.date) - new Date(a.date));
 
     filteredMovies.forEach((movie) => {
@@ -69,19 +67,8 @@ function renderMovies() {
         flare.className = 'card-flare';
         card.appendChild(flare); 
 
-        // --- NOUVEAU : Création des éléments réels de la Timeline ---
-        const timelineLine = document.createElement('div');
-        timelineLine.className = 'timeline-line';
-
-        const timelineDot = document.createElement('div');
-        timelineDot.className = 'timeline-dot';
-
-        const dateBadge = document.createElement('span');
-        dateBadge.className = 'timeline-date-badge';
-        dateBadge.innerText = new Date(movie.date).toLocaleDateString('fr-FR');
-        // -------------------------------------------------------------
-
         let isMoving = false;
+
         card.addEventListener('touchstart', () => { isMoving = false; }, { passive: true });
         card.addEventListener('touchmove', (e) => {
             if (e.cancelable) e.preventDefault(); 
@@ -92,24 +79,21 @@ function renderMovies() {
             resetCardTransform(card);
             setTimeout(() => { isMoving = false; }, 50);
         });
+        
         card.addEventListener('click', () => {
-            if (!isMoving) { showMovieDetails(realIndex); }
+            if (!isMoving) {
+                showMovieDetails(realIndex);
+            }
         });
 
-        // --- NOUVEL ORDRE D'IMBRICATION ---
-        card.appendChild(dateBadge); // Le badge va DANS la carte pour utiliser ses dimensions
-        
         perspectiveDiv.appendChild(card);
-        perspectiveDiv.appendChild(timelineLine);
-        perspectiveDiv.appendChild(timelineDot);
-        
         moviesContainer.appendChild(perspectiveDiv);
     });
 
     if (currentView === 'carousel') {
         initCarouselObserver();
     } else if (window.carouselObserver) {
-        window.carouselObserver.disconnect(); // Désactive l'observer si on quitte le carrousel
+        window.carouselObserver.disconnect();
     }
 }
 
@@ -353,14 +337,11 @@ document.addEventListener('click', (e) => {
     if (!fabContainer.contains(e.target)) closeRadialMenu();
 });
 
-// Gestion cyclique de la bascule d'affichage à 3 états
+// Bascule d'affichage simplifiée à 2 états
 btnToggleView.addEventListener('click', () => {
     if (currentView === 'grid') {
         currentView = 'carousel';
         btnToggleView.innerText = '☰';
-    } else if (currentView === 'carousel') {
-        currentView = 'timeline';
-        btnToggleView.innerText = '⏳';
     } else {
         currentView = 'grid';
         btnToggleView.innerText = '📱';
