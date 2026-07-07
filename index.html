@@ -26,23 +26,39 @@
     </div>
     <div id="form-modal" class="modal hidden">
         <div class="modal-content">
-            <h2>Ajouter un film</h2>
+            <h2 id="modal-title-dynamic">Ajouter un film</h2>
             <form id="movie-form">
                 <div class="form-group">
-                    <label for="title">Titre</label>
+                    <label for="title" id="label-title">Titre</label>
                     <input type="text" id="title" required>
                 </div>
+                <div class="form-group hidden-field" id="form-group-artist">
+                    <label for="artist" id="label-artist">Artiste</label>
+                    <input type="text" id="artist">
+                </div>
                 <div class="form-group">
-                    <label for="image">URL de l'image (Affiche)</label>
+                    <label for="image" id="label-image">URL de l'image (Affiche)</label>
                     <input type="url" id="image" placeholder="https://..." required>
+                </div>
+                <div class="form-group hidden-field" id="form-group-year">
+                    <label for="year">Année de sortie</label>
+                    <input type="number" id="year" min="1950" max="2026">
+                </div>
+                <div class="form-group hidden-field" id="form-group-platform">
+                    <label for="platform">Plateforme (Console / PC)</label>
+                    <input type="text" id="platform" placeholder="PS5, Steam, Switch...">
                 </div>
                 <div class="form-group">
                     <label for="rating">Note (/5)</label>
                     <input type="number" id="rating" min="0" max="5" step="0.5" required>
                 </div>
                 <div class="form-group">
-                    <label for="date">Date de visionnage</label>
+                    <label for="date" id="label-date">Date de visionnage</label>
                     <input type="date" id="date" required>
+                </div>
+                <div class="form-group hidden-field" id="form-group-date-end">
+                    <label for="date-end">Date de fin (Complété / Abandonné)</label>
+                    <input type="date" id="date-end">
                 </div>
                 <div class="form-group">
                     <label for="description">Description</label>

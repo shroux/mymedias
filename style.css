@@ -341,3 +341,26 @@ header {
 /* Masquage des barres de défilement */
 .movies-grid.carousel-mode::-webkit-scrollbar { display: none; }
 .movies-grid.carousel-mode { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Permet de masquer/afficher dynamiquement les champs du formulaire */
+.form-group.hidden-field {
+    display: none;
+}
+
+/* --- Format CD (1:1) pour la musique --- */
+/* En mode Grille */
+.movies-grid:not(.carousel-mode) .card-perspective.music-card-size {
+    width: 140px;
+    height: 140px; /* Devient un carré parfait */
+}
+
+/* En mode Carrousel */
+.carousel-mode .card-perspective.music-card-size {
+    flex: 0 0 140px;
+    height: 140px; /* Devient un carré parfait */
+}
+/* --- Format Affiche standard (Films et Jeux) --- */
+.movies-grid:not(.carousel-mode) .card-perspective:not(.music-card-size) {
+    width: 140px;
+    height: 210px;
+}

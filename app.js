@@ -9,12 +9,23 @@ const movieForm = document.getElementById('movie-form');
 const btnCancel = document.getElementById('btn-cancel');
 const closeDetails = document.getElementById('close-details');
 const movieDetailsContent = document.getElementById('movie-details-content');
-const btnToggleView = document.getElementById('btn-toggle-view'); // Nouveau sélecteur
+const btnToggleView = document.getElementById('btn-toggle-view');
+
+// Sélecteurs dynamiques pour le formulaire universel
+const modalTitleDynamic = document.getElementById('modal-title-dynamic');
+const labelTitle = document.getElementById('label-title');
+const labelArtist = document.getElementById('label-artist');
+const labelImage = document.getElementById('label-image');
+const labelDate = document.getElementById('label-date');
+const formGroupArtist = document.getElementById('form-group-artist');
+const formGroupYear = document.getElementById('form-group-year');
+const formGroupPlatform = document.getElementById('form-group-platform');
+const formGroupDateEnd = document.getElementById('form-group-date-end');
 
 // --- État de l'application ---
 let currentCategory = 'movies'; 
-let currentView = 'grid'; // Mode de vue par défaut : 'grid' ou 'carousel'
-let movies = JSON.parse(localStorage.getItem('movies')) || [];
+let currentView = 'grid'; 
+let movies = JSON.parse(localStorage.getItem('movies')) || []; 
 let pressTimer;
 
 // --- Fonctions de Stockage & Rendu ---
@@ -31,13 +42,26 @@ function renderMovies() {
         moviesContainer.classList.remove('carousel-mode');
     }
 
+    // 1. On filtre par catégorie comme avant
     const filteredMovies = movies.filter(movie => movie.category === currentCategory || (!movie.category && currentCategory === 'movies'));
 
+    // 2. NOUVEAU : On trie du plus récent au plus ancien en fonction de la date
+    filteredMovies.sort((a, b) => {
+        return new Date(b.date) - new Date(a.date);
+    });
+
+    // 3. On génère le HTML pour chaque élément trié
     filteredMovies.forEach((movie) => {
+        // On récupère toujours l'index réel global dans le tableau 'movies' 
+        // pour que la suppression et les détails pointent sur le bon objet.
         const realIndex = movies.indexOf(movie);
 
         const perspectiveDiv = document.createElement('div');
         perspectiveDiv.className = 'card-perspective';
+        
+        if (movie.category === 'music') {
+            perspectiveDiv.classList.add('music-card-size');
+        }
 
         const card = document.createElement('div');
         card.className = 'movie-card';
@@ -62,43 +86,18 @@ function renderMovies() {
         });
         
         card.addEventListener('click', () => {
-            if (!isMoving) { showMovieDetails(realIndex); }
+            if (!isMoving) {
+                showMovieDetails(realIndex);
+            }
         });
 
         perspectiveDiv.appendChild(card);
         moviesContainer.appendChild(perspectiveDiv);
     });
 
-    // --- NOUVEAU : Initialiser l'Observer si on est en mode Carrousel ---
     if (currentView === 'carousel') {
         initCarouselObserver();
     }
-}
-
-function initCarouselObserver() {
-    // Si l'observer existe déjà sur la fenêtre, on nettoie (optionnel mais propre)
-    if (window.carouselObserver) window.carouselObserver.disconnect();
-
-    // Configuration de l'observer : On cible une zone verticale stricte au milieu de l'écran
-    const options = {
-        root: moviesContainer,
-        rootMargin: '0px -45% 0px -45%', // Réduit la zone de détection à une ligne centrale de 10% de l'écran
-        threshold: 0
-    };
-
-    window.carouselObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('active-card');
-            } else {
-                entry.target.classList.remove('active-card');
-            }
-        });
-    }, options);
-
-    // On attache l'observer sur le wrapper de perspective de chaque carte
-    const cards = moviesContainer.querySelectorAll('.card-perspective');
-    cards.forEach(card => window.carouselObserver.observe(card));
 }
 
 // --- Calcul de l'effet 3D (Tilt) et de la LUMIÈRE sur Mobile ---
@@ -142,28 +141,47 @@ function resetCardTransform(card) {
     }
 }
 
+// --- Détection de la carte centrale (Focus) ---
+function initCarouselObserver() {
+    if (window.carouselObserver) window.carouselObserver.disconnect();
+
+    const options = {
+        root: moviesContainer,
+        rootMargin: '0px -45% 0px -45%',
+        threshold: 0
+    };
+
+    window.carouselObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('active-card');
+            } else {
+                entry.target.classList.remove('active-card');
+            }
+        });
+    }, options);
+
+    const cards = moviesContainer.querySelectorAll('.card-perspective');
+    cards.forEach(card => window.carouselObserver.observe(card));
+}
+
 // --- Logique du Menu Radial & Appui Long ---
 function openRadialMenu() {
     fabContainer.classList.add('open');
-    
     const children = fabContainer.querySelectorAll('.fab-child');
     let visibleIndex = 0;
 
     children.forEach((child) => {
         const cat = child.dataset.cat;
-        
         if (cat === currentCategory) {
             child.classList.add('hidden-cat');
             child.style.transform = 'none';
         } else {
             child.classList.remove('hidden-cat');
-            
             const angle = (visibleIndex * 30) + 180; 
             const radius = 110; 
-            
             const x = Math.cos((angle * Math.PI) / 180) * radius;
             const y = Math.sin((angle * Math.PI) / 180) * radius;
-            
             child.style.transform = `translate(${x}px, ${y}px) scale(1)`;
             visibleIndex++;
         }
@@ -180,32 +198,94 @@ function closeRadialMenu() {
 
 function startPress(e) {
     if (e.type === 'click' && fabContainer.classList.contains('open')) return;
-    
-    pressTimer = setTimeout(() => {
-        openRadialMenu();
-    }, 300);
+    pressTimer = setTimeout(() => { openRadialMenu(); }, 300);
 }
 
-function cancelPress() {
-    clearTimeout(pressTimer);
+function cancelPress() { clearTimeout(pressTimer); }
+
+// --- Adaptation Dynamique du Formulaire ---
+function setupFormFields() {
+    formGroupArtist.classList.add('hidden-field');
+    formGroupYear.classList.add('hidden-field');
+    formGroupPlatform.classList.add('hidden-field');
+    formGroupDateEnd.classList.add('hidden-field');
+    document.getElementById('artist').required = false;
+    document.getElementById('year').required = false;
+    document.getElementById('platform').required = false;
+
+    if (currentCategory === 'music') {
+        modalTitleDynamic.innerText = "Ajouter un album";
+        labelTitle.innerText = "Titre de l'album";
+        labelArtist.innerText = "Artiste";
+        labelImage.innerText = "URL de la pochette (Format carré)";
+        labelDate.innerText = "Date de première écoute";
+        formGroupArtist.classList.remove('hidden-field');
+        formGroupYear.classList.remove('hidden-field');
+        document.getElementById('artist').required = true;
+        document.getElementById('year').required = true;
+
+    } else if (currentCategory === 'games') {
+        modalTitleDynamic.innerText = "Ajouter un jeu vidéo";
+        labelTitle.innerText = "Nom du jeu";
+        labelArtist.innerText = "Développé par";
+        labelImage.innerText = "URL de la cover (Format vertical Steam)";
+        labelDate.innerText = "Date de début de partie";
+        formGroupArtist.classList.remove('hidden-field');
+        formGroupYear.classList.remove('hidden-field');
+        formGroupPlatform.classList.remove('hidden-field');
+        formGroupDateEnd.classList.remove('hidden-field');
+        document.getElementById('artist').required = true;
+        document.getElementById('year').required = true;
+        document.getElementById('platform').required = true;
+
+    } else if (currentCategory === 'books') {
+        modalTitleDynamic.innerText = "Ajouter un livre";
+        labelTitle.innerText = "Titre du livre";
+        labelArtist.innerText = "Auteur";
+        labelImage.innerText = "URL de la couverture (Format vertical)";
+        labelDate.innerText = "Date de début de lecture";
+        formGroupArtist.classList.remove('hidden-field');
+        formGroupDateEnd.classList.remove('hidden-field');
+        document.getElementById('artist').required = true;
+
+    } else { // Mode par défaut : Movies
+        modalTitleDynamic.innerText = "Ajouter un film";
+        labelTitle.innerText = "Titre";
+        labelImage.innerText = "URL de l'image (Affiche)";
+        labelDate.innerText = "Date de visionnage";
+    }
 }
 
 // --- Gestion des Modales & Détails ---
 function showMovieDetails(index) {
-    const movie = movies[index];
+    const item = movies[index];
+    const isMusic = item.category === 'music';
+    const isGame = item.category === 'games';
+    const isBook = item.category === 'books';
+
     movieDetailsContent.innerHTML = `
-        <img src="${movie.image}" style="width:100%; border-radius:12px; margin-bottom:16px;">
-        <h2>${movie.title}</h2>
-        <p style="color:var(--accent-color); font-weight:bold; margin: 8px 0;">Note : ${movie.rating}/5</p>
-        <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">Vu le : ${new Date(movie.date).toLocaleDateString('fr-FR')}</p>
-        <p style="margin-bottom: 24px;">${movie.description}</p>
+        <img src="${item.image}" style="width:100%; border-radius:12px; margin-bottom:16px; aspect-ratio: ${isMusic ? '1/1' : 'auto'}; object-fit: cover;">
+        <h2>${item.title}</h2>
         
-        <button id="btn-delete-movie" class="btn danger" style="width: 100%;">Supprimer ce film</button>
+        ${isMusic ? `<p style="font-size:18px; margin: 4px 0;"><strong>Artiste :</strong> ${item.artist}</p>` : ''}
+        ${isGame ? `<p style="font-size:18px; margin: 4px 0;"><strong>Développeur :</strong> ${item.artist}</p>` : ''}
+        ${isBook ? `<p style="font-size:18px; margin: 4px 0;"><strong>Auteur :</strong> ${item.artist}</p>` : ''}
+        ${isGame ? `<p style="font-size:16px; color:var(--accent-color); margin: 4px 0;"><strong>Plateforme :</strong> ${item.platform}</p>` : ''}
+        ${(isMusic || isGame) ? `<p style="font-size:14px; color:var(--text-muted); margin-bottom: 4px;"><strong>Année :</strong> ${item.year}</p>` : ''}
+        
+        <p style="color:var(--accent-color); font-weight:bold; margin: 8px 0;">Note : ${item.rating}/5</p>
+        
+        <p style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">
+            <strong>${isMusic ? 'Écouté le :' : isGame ? 'Commencé le :' : isBook ? 'Début de lecture :' : 'Vu le :'}</strong> ${new Date(item.date).toLocaleDateString('fr-FR')}
+        </p>
+        ${(isGame || isBook) && item.dateEnd ? `<p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;"><strong>Fini le :</strong> ${new Date(item.dateEnd).toLocaleDateString('fr-FR')}</p>` : ''}
+        
+        <p style="margin-bottom: 24px; line-height: 1.5;">${item.description}</p>
+        <button id="btn-delete-movie" class="btn danger" style="width: 100%;">Supprimer cet élément</button>
     `;
 
-    const btnDelete = document.getElementById('btn-delete-movie');
-    btnDelete.addEventListener('click', () => {
-        if (confirm(`Voulez-vous vraiment supprimer "${movie.title}" ?`)) {
+    document.getElementById('btn-delete-movie').addEventListener('click', () => {
+        if (confirm(`Voulez-vous vraiment supprimer cet élément ?`)) {
             movies.splice(index, 1);
             saveMovies();
             renderMovies();
@@ -220,7 +300,7 @@ function showMovieDetails(index) {
 movieForm.addEventListener('submit', (e) => {
     e.preventDefault();
     
-    const newMovie = {
+    const newItem = {
         title: document.getElementById('title').value,
         image: document.getElementById('image').value,
         rating: document.getElementById('rating').value,
@@ -229,7 +309,20 @@ movieForm.addEventListener('submit', (e) => {
         category: currentCategory
     };
 
-    movies.push(newMovie);
+    if (currentCategory === 'music' || currentCategory === 'games' || currentCategory === 'books') {
+        newItem.artist = document.getElementById('artist').value; // Sert d'Auteur pour les livres
+    }
+    if (currentCategory === 'music' || currentCategory === 'games') {
+        newItem.year = document.getElementById('year').value;
+    }
+    if (currentCategory === 'games') {
+        newItem.platform = document.getElementById('platform').value;
+    }
+    if (currentCategory === 'games' || currentCategory === 'books') {
+        newItem.dateEnd = document.getElementById('date-end').value;
+    }
+
+    movies.push(newItem);
     saveMovies();
     renderMovies();
     
@@ -237,19 +330,16 @@ movieForm.addEventListener('submit', (e) => {
     formModal.classList.add('hidden');
 });
 
-// --- Écouteurs d'Événements Glogaux ---
+// --- Écouteurs d'Événements Globaux ---
 fabMain.addEventListener('mousedown', startPress);
 fabMain.addEventListener('touchstart', startPress, { passive: true });
 window.addEventListener('mouseup', cancelPress);
 window.addEventListener('touchend', cancelPress);
 
 document.addEventListener('click', (e) => {
-    if (!fabContainer.contains(e.target)) {
-        closeRadialMenu();
-    }
+    if (!fabContainer.contains(e.target)) closeRadialMenu();
 });
 
-// Gestion du bouton de bascule d'affichage (Grid VS Carousel)
 btnToggleView.addEventListener('click', () => {
     if (currentView === 'grid') {
         currentView = 'carousel';
@@ -261,7 +351,6 @@ btnToggleView.addEventListener('click', () => {
     renderMovies();
 });
 
-// Changement dynamique de catégorie
 fabContainer.querySelectorAll('.category-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         currentCategory = btn.dataset.cat;
@@ -280,6 +369,7 @@ fabContainer.querySelectorAll('.category-btn').forEach(btn => {
 });
 
 fabAdd.addEventListener('click', () => {
+    setupFormFields();
     formModal.classList.remove('hidden');
     closeRadialMenu();
 });
