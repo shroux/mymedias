@@ -280,6 +280,9 @@ function showMovieDetails(index) {
     const isGame = item.category === 'games';
     const isBook = item.category === 'books';
 
+    const modalContent = detailsModal.querySelector('.modal-content');
+    modalContent.classList.remove('actions-revealed'); // Reset option drawer state
+
     movieDetailsContent.innerHTML = `
         <img src="${item.image}" style="width:100%; border-radius:12px; margin-bottom:16px; aspect-ratio: ${isMusic ? '1/1' : 'auto'}; object-fit: cover;">
         <h2>${item.title}</h2>
@@ -297,21 +300,64 @@ function showMovieDetails(index) {
         </p>
         ${(isGame || isBook) && item.dateEnd ? `<p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;"><strong>Fini le :</strong> ${new Date(item.dateEnd).toLocaleDateString('fr-FR')}</p>` : ''}
         
-        <p style="margin-bottom: 24px; line-height: 1.5;">${item.description}</p>
+        <p style="line-height: 1.5; margin-bottom: 8px;">${item.description}</p>
         
-        <!-- Updated Action Buttons Group -->
-        <div style="display: flex; gap: 12px; margin-top: 16px;">
-            <button id="btn-edit-movie" class="btn secondary" style="flex: 1;">Modifier</button>
-            <button id="btn-delete-movie" class="btn danger" style="flex: 1;">Supprimer</button>
+        <div class="swipe-hint">▲ Options (Haut)  |  Fermer (Bas) ▼</div>
+
+        <div class="action-drawer">
+            <button id="btn-edit-movie" class="btn secondary" style="flex: 1; padding: 6px 12px; font-size: 14px;">Modifier</button>
+            <button id="btn-delete-movie" class="btn danger" style="flex: 1; padding: 6px 12px; font-size: 14px;">Supprimer</button>
         </div>
     `;
 
-    // Trigger Edit Mode
+    // --- Gesture Detection for Options & Dismissal ---
+    let touchStartY = 0;
+    let touchStartX = 0;
+
+    const handleDetailsTouchStart = (e) => {
+        touchStartY = e.touches[0].clientY;
+        touchStartX = e.touches[0].clientX;
+    };
+
+    const handleDetailsTouchEnd = (e) => {
+        const touchEndY = e.changedTouches[0].clientY;
+        const touchEndX = e.changedTouches[0].clientX;
+        
+        const deltaY = touchStartY - touchEndY; // Positive = Swiped Up, Negative = Swiped Down
+        const deltaX = Math.abs(touchStartX - touchEndX);
+
+        // Ensure the movement is primarily vertical
+        if (Math.abs(deltaY) > 50 && Math.abs(deltaY) > deltaX) {
+            if (deltaY > 0) {
+                // Swipe Up: Reveal Options
+                modalContent.classList.add('actions-revealed');
+            } else {
+                // Swipe Down: Check state
+                if (modalContent.classList.contains('actions-revealed')) {
+                    // If options are open, hide options first
+                    modalContent.classList.remove('actions-revealed');
+                } else {
+                    // If options are already hidden, close the item details entirely
+                    detailsModal.classList.add('hidden');
+                }
+            }
+        }
+    };
+
+    modalContent.removeEventListener('touchstart', modalContent._tsHandler);
+    modalContent.removeEventListener('touchend', modalContent._teHandler);
+    
+    modalContent._tsHandler = handleDetailsTouchStart;
+    modalContent._teHandler = handleDetailsTouchEnd;
+
+    modalContent.addEventListener('touchstart', handleDetailsTouchStart, { passive: true });
+    modalContent.addEventListener('touchend', handleDetailsTouchEnd, { passive: true });
+
+    // --- Action Button Handlers ---
     document.getElementById('btn-edit-movie').addEventListener('click', () => {
-        editingIndex = index; // Store index to signal update instead of append
+        editingIndex = index;
         setupFormFields();
         
-        // Pre-populate form values
         document.getElementById('title').value = item.title || '';
         document.getElementById('image').value = item.image || '';
         document.getElementById('rating').value = item.rating || '';
@@ -323,7 +369,6 @@ function showMovieDetails(index) {
         if (document.getElementById('platform')) document.getElementById('platform').value = item.platform || '';
         if (document.getElementById('date-end')) document.getElementById('date-end').value = item.dateEnd || '';
 
-        // Dynamically change modal title for feedback
         modalTitleDynamic.innerText = modalTitleDynamic.innerText.replace("Ajouter", "Modifier");
 
         detailsModal.classList.add('hidden');

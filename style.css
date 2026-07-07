@@ -364,3 +364,64 @@ header {
     opacity: 1;
     transform: scale(0.8); /* Counteracts the parent 1.25x scaling slightly so text stays sharp */
 }
+
+/* --- Action Drawer Gestures --- */
+/* Ensure the modal content can contain the absolute-positioned drawer safely */
+#details-modal .modal-content {
+    position: relative;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding-bottom: 24px;
+    transition: padding-bottom 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* Adjust padding dynamically when actions are showing to prevent overlapping descriptions */
+#details-modal .modal-content.actions-revealed {
+    padding-bottom: 80px; 
+}
+
+/* The subtle action panel resting hidden right below the viewable area */
+.action-drawer {
+    position: absolute;
+    bottom: -100px; /* Hidden offscreen below padding limit */
+    left: 0;
+    width: 100%;
+    height: 70px;
+    background-color: #151f32; /* Slightly darker shade for premium contrast */
+    border-top: 1px solid #334155;
+    display: flex;
+    gap: 12px;
+    padding: 14px 24px;
+    box-sizing: border-box;
+    opacity: 0;
+    transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.2s ease;
+    z-index: 20;
+}
+
+/* Reveal State triggered by swipe up */
+.modal-content.actions-revealed .action-drawer {
+    transform: translateY(-70px);
+    opacity: 1;
+}
+
+/* Visual Hint Indicator at the bottom of details */
+.swipe-hint {
+    display: none;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 11px;
+    margin-top: 16px;
+    opacity: 0.6;
+    animation: pulseHint 2s infinite ease-in-out;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+.modal-content.actions-revealed .swipe-hint {
+    opacity: 0; /* Fade out hint when actions are revealed */
+}
+
+@keyframes pulseHint {
+    0%, 100% { transform: translateY(0); opacity: 0.4; }
+    50% { transform: translateY(-3px); opacity: 0.8; }
+}
