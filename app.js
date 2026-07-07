@@ -376,12 +376,10 @@ function showMovieDetails(index) {
     });
 
     document.getElementById('btn-delete-movie').addEventListener('click', () => {
-        if (confirm(`Voulez-vous vraiment supprimer cet élément ?`)) {
-            movies.splice(index, 1);
-            saveMovies();
-            renderMovies();
-            detailsModal.classList.add('hidden');
-        }
+        movies.splice(index, 1);
+        saveMovies();
+        renderMovies();
+        detailsModal.classList.add('hidden');
     });
 
     detailsModal.classList.remove('hidden');
@@ -413,20 +411,28 @@ movieForm.addEventListener('submit', (e) => {
         updatedItem.dateEnd = document.getElementById('date-end').value;
     }
 
+    // Sauvegarde de l'index avant réinitialisation pour la redirection
+    const lastEditingIndex = editingIndex;
+
     if (editingIndex !== null) {
-        // Edit mode: replace the old object details directly
+        // Mode Édition : écrase l'élément existant
         movies[editingIndex] = updatedItem;
-        editingIndex = null; // Clear edit tracking state
+        editingIndex = null; // Réinitialise l'état
     } else {
-        // Create mode
+        // Mode Création
         movies.push(updatedItem);
     }
 
     saveMovies();
     renderMovies();
-    
     movieForm.reset();
     formModal.classList.add('hidden');
+
+    // --- NOUVEAU : Redirection conditionnelle ---
+    if (lastEditingIndex !== null) {
+        // Si on était en train de modifier, on réaffiche directement le détail mis à jour
+        showMovieDetails(lastEditingIndex);
+    }
 });
 
 // --- Écouteurs d'Événements Globaux ---
@@ -476,8 +482,17 @@ fabAdd.addEventListener('click', () => {
     closeRadialMenu();
 });
 
-btnCancel.addEventListener('click', () => formModal.classList.add('hidden'));
-closeDetails.addEventListener('click', () => detailsModal.classList.add('hidden'));
+btnCancel.addEventListener('click', () => {
+    movieForm.reset();
+    formModal.classList.add('hidden');
+    
+    // Si on annule pendant une édition, on retourne au détail de l'item
+    if (editingIndex !== null) {
+        const lastEditingIndex = editingIndex;
+        editingIndex = null; // On nettoie l'état d'édition
+        showMovieDetails(lastEditingIndex);
+    }
+});closeDetails.addEventListener('click', () => detailsModal.classList.add('hidden'));
 
 // Initialisation au chargement
 renderMovies();
