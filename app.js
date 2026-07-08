@@ -284,7 +284,7 @@ function showMovieDetails(index) {
     modalContent.classList.remove('actions-revealed'); // Reset option drawer state
 
     movieDetailsContent.innerHTML = `
-        <img src="${item.image}" style="width:100%; border-radius:12px; margin-bottom:16px; aspect-ratio: ${isMusic ? '1/1' : 'auto'}; object-fit: cover;">
+        <img src="${item.image}" class="details-poster" style="aspect-ratio: ${isMusic ? '1/1' : 'auto'};">
         <h2>${item.title}</h2>
         
         ${isMusic ? `<p style="font-size:18px; margin: 4px 0;"><strong>Artiste :</strong> ${item.artist}</p>` : ''}
@@ -302,7 +302,7 @@ function showMovieDetails(index) {
         
         <p style="line-height: 1.5; margin-bottom: 8px;">${item.description}</p>
         
-        <div class="swipe-hint">▲ Options (Haut)  |  Fermer (Bas) ▼</div>
+        <div class="swipe-hint">▲ Glissez vers le haut pour les options ▲</div>
 
         <div class="action-drawer">
             <button id="btn-edit-movie" class="btn secondary" style="flex: 1; padding: 6px 12px; font-size: 14px;">Modifier</button>
@@ -310,7 +310,7 @@ function showMovieDetails(index) {
         </div>
     `;
 
-    // --- Gesture Detection for Options & Dismissal ---
+    // --- Détection du geste de Swipe Up uniquement ---
     let touchStartY = 0;
     let touchStartX = 0;
 
@@ -323,22 +323,18 @@ function showMovieDetails(index) {
         const touchEndY = e.changedTouches[0].clientY;
         const touchEndX = e.changedTouches[0].clientX;
         
-        const deltaY = touchStartY - touchEndY; // Positive = Swiped Up, Negative = Swiped Down
+        const deltaY = touchStartY - touchEndY; // Positif = Swipe vers le haut
         const deltaX = Math.abs(touchStartX - touchEndX);
 
-        // Ensure the movement is primarily vertical
+        // On vérifie que le mouvement est vertical et fait au moins 50px
         if (Math.abs(deltaY) > 50 && Math.abs(deltaY) > deltaX) {
             if (deltaY > 0) {
-                // Swipe Up: Reveal Options
+                // Swipe Up : On affiche les options
                 modalContent.classList.add('actions-revealed');
             } else {
-                // Swipe Down: Check state
+                // Swipe Down : On referme juste le tiroir d'options s'il est ouvert, sans fermer le modal
                 if (modalContent.classList.contains('actions-revealed')) {
-                    // If options are open, hide options first
                     modalContent.classList.remove('actions-revealed');
-                } else {
-                    // If options are already hidden, close the item details entirely
-                    detailsModal.classList.add('hidden');
                 }
             }
         }
@@ -353,7 +349,7 @@ function showMovieDetails(index) {
     modalContent.addEventListener('touchstart', handleDetailsTouchStart, { passive: true });
     modalContent.addEventListener('touchend', handleDetailsTouchEnd, { passive: true });
 
-    // --- Action Button Handlers ---
+    // --- Boutons d'actions du tiroir ---
     document.getElementById('btn-edit-movie').addEventListener('click', () => {
         editingIndex = index;
         setupFormFields();

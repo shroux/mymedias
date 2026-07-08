@@ -369,10 +369,43 @@ header {
 /* Ensure the modal content can contain the absolute-positioned drawer safely */
 #details-modal .modal-content {
     position: relative;
-    overflow-x: hidden;
-    overflow-y: auto;
-    padding-bottom: 24px;
-    transition: padding-bottom 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    background-color: var(--card-bg);
+    padding: 24px;
+    border-radius: 16px;
+    width: 92%; 
+    max-width: 460px; /* Largeur de la carte */
+    
+    /* --- CORRECTION ICI : Force une hauteur généreuse sur l'écran --- */
+    height: 75dvh;     /* Le modal fera maintenant TOUJOURS 75% de la hauteur de l'écran */
+    max-height: 85dvh; /* Sécurité maximale */
+    
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; 
+}
+
+#details-modal {
+    overscroll-behavior-y: contain;
+}
+
+#movie-details-content img.details-poster {
+    width: 100%;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    object-fit: cover;
+    
+    /* --- AJUSTEMENT ICI --- */
+    height: 45%;       /* L'image prendra une vraie proportion de la hauteur du modal */
+    min-height: 200px; /* Évite qu'elle ne devienne trop petite */
+    flex-shrink: 0;    /* On lui interdit de rétrécir pour qu'elle reste grande */
+}
+
+#movie-details-content {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto; 
+    flex: 1;
+    min-height: 0; 
 }
 
 /* Adjust padding dynamically when actions are showing to prevent overlapping descriptions */
@@ -400,7 +433,7 @@ header {
 
 /* Reveal State triggered by swipe up */
 .modal-content.actions-revealed .action-drawer {
-    transform: translateY(-70px);
+    transform: translateY(-95px);
     opacity: 1;
 }
 
