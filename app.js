@@ -29,32 +29,6 @@ let movies = JSON.parse(localStorage.getItem('movies')) || [];
 let pressTimer;
 let editingIndex = null;
 
-// --- Blocage du Pull-to-Refresh natif (WebView / Navigateur) ---
-let touchStartClientY = 0;
-
-document.addEventListener('touchstart', (e) => {
-    touchStartClientY = e.touches[0].clientY;
-}, { passive: true });
-
-document.addEventListener('touchmove', (e) => {
-    const touchMoveClientY = e.touches[0].clientY;
-    
-    // 1. On vérifie si un des modaux est actuellement ouvert/visible
-    const isFormOpen = !document.getElementById('form-modal').classList.contains('hidden');
-    const isDetailsOpen = !document.getElementById('details-modal').classList.contains('hidden');
-    
-    // 2. Si l'utilisateur est dans un modal, ON NE BLOQUE RIEN, on le laisse scroller
-    if (isFormOpen || isDetailsOpen) {
-        return; 
-    }
-    
-    // 3. S'il est sur l'écran principal, qu'il est tout en haut et qu'il glisse vers le bas
-    if (window.scrollY === 0 && touchMoveClientY > touchStartClientY) {
-        if (e.cancelable) {
-            e.preventDefault(); // Bloque le refresh de l'APK uniquement ici
-        }
-    }
-}, { passive: false });
 
 // --- Fonctions de Stockage & Rendu ---
 function saveMovies() {
@@ -109,6 +83,7 @@ function renderMovies() {
         if (movie.category === 'music') prefix = 'Écouté le';
         if (movie.category === 'games') prefix = 'Lancé le';
         if (movie.category === 'books') prefix = 'Lu le';
+        if (movie.category === 'series') prefix = 'Commencé le';
 
         dateLabel.innerText = `${prefix} ${formattedDate}`;
         // ----------------------------------------
@@ -222,7 +197,7 @@ function openRadialMenu() {
             child.style.transform = 'none';
         } else {
             child.classList.remove('hidden-cat');
-            const angle = (visibleIndex * 30) + 180; 
+            const angle = (visibleIndex * 25) + 180; 
             const radius = 110; 
             const x = Math.cos((angle * Math.PI) / 180) * radius;
             const y = Math.sin((angle * Math.PI) / 180) * radius;
@@ -292,6 +267,13 @@ function setupFormFields() {
         formGroupDateEnd.classList.remove('hidden-field');
         document.getElementById('artist').required = true;
 
+    } else if (currentCategory === 'series') {
+        modalTitleDynamic.innerText = "Ajouter une série TV";
+        labelTitle.innerText = "Titre de la série";
+        labelImage.innerText = "URL de l'image (Affiche)";
+        labelDate.innerText = "Date de début de visionnage";
+        formGroupDateEnd.classList.remove('hidden-field');
+
     } else { 
         modalTitleDynamic.innerText = "Ajouter un film";
         labelTitle.innerText = "Titre";
@@ -306,6 +288,7 @@ function showMovieDetails(index) {
     const isMusic = item.category === 'music';
     const isGame = item.category === 'games';
     const isBook = item.category === 'books';
+    const isSeries = item.category === 'series';
 
     const modalContent = detailsModal.querySelector('.modal-content');
     modalContent.classList.remove('actions-revealed'); // Reset option drawer state
@@ -323,9 +306,9 @@ function showMovieDetails(index) {
         <p style="color:var(--accent-color); font-weight:bold; margin: 8px 0;">Note : ${item.rating}/5</p>
         
         <p style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">
-            <strong>${isMusic ? 'Écouté le :' : isGame ? 'Commencé le :' : isBook ? 'Début de lecture :' : 'Vu le :'}</strong> ${new Date(item.date).toLocaleDateString('fr-FR')}
+            <strong>${isMusic ? 'Écouté le :' : (isGame || isSeries) ? 'Commencé le :' : isBook ? 'Début de lecture :' : 'Vu le :'}</strong> ${new Date(item.date).toLocaleDateString('fr-FR')}
         </p>
-        ${(isGame || isBook) && item.dateEnd ? `<p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;"><strong>Fini le :</strong> ${new Date(item.dateEnd).toLocaleDateString('fr-FR')}</p>` : ''}
+        ${(isGame || isBook || isSeries) && item.dateEnd ? `<p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;"><strong>Fini le :</strong> ${new Date(item.dateEnd).toLocaleDateString('fr-FR')}</p>` : ''}
         
         <p style="line-height: 1.5; margin-bottom: 8px;">${item.description}</p>
         
@@ -430,8 +413,8 @@ movieForm.addEventListener('submit', (e) => {
     if (currentCategory === 'games') {
         updatedItem.platform = document.getElementById('platform').value;
     }
-    if (currentCategory === 'games' || currentCategory === 'books') {
-        updatedItem.dateEnd = document.getElementById('date-end').value;
+if (currentCategory === 'games' || currentCategory === 'books' || currentCategory === 'series') {
+            updatedItem.dateEnd = document.getElementById('date-end').value;
     }
 
     // Sauvegarde de l'index avant réinitialisation pour la redirection
@@ -488,7 +471,8 @@ fabContainer.querySelectorAll('.category-btn').forEach(btn => {
             movies: 'Mes Films', 
             games: 'Mes Jeux Vidéo', 
             music: 'Ma Musique', 
-            books: 'Mes Livres' 
+            books: 'Mes Livres',
+            series: 'Mes Séries TV'
         };
         document.querySelector('header h1').innerText = titles[currentCategory];
         
