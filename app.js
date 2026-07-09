@@ -33,19 +33,25 @@ let editingIndex = null;
 let touchStartClientY = 0;
 
 document.addEventListener('touchstart', (e) => {
-    // On enregistre la position verticale initiale du doigt
     touchStartClientY = e.touches[0].clientY;
 }, { passive: true });
 
 document.addEventListener('touchmove', (e) => {
     const touchMoveClientY = e.touches[0].clientY;
     
-    // Si la page est tout en haut (scrollY === 0) 
-    // ET que le mouvement du doigt descend (touchMoveClientY > touchStartClientY)
+    // 1. On vérifie si un des modaux est actuellement ouvert/visible
+    const isFormOpen = !document.getElementById('form-modal').classList.contains('hidden');
+    const isDetailsOpen = !document.getElementById('details-modal').classList.contains('hidden');
+    
+    // 2. Si l'utilisateur est dans un modal, ON NE BLOQUE RIEN, on le laisse scroller
+    if (isFormOpen || isDetailsOpen) {
+        return; 
+    }
+    
+    // 3. S'il est sur l'écran principal, qu'il est tout en haut et qu'il glisse vers le bas
     if (window.scrollY === 0 && touchMoveClientY > touchStartClientY) {
-        // Si l'événement peut être annulé, on bloque le comportement du navigateur/APK
         if (e.cancelable) {
-            e.preventDefault();
+            e.preventDefault(); // Bloque le refresh de l'APK uniquement ici
         }
     }
 }, { passive: false });
