@@ -29,6 +29,27 @@ let movies = JSON.parse(localStorage.getItem('movies')) || [];
 let pressTimer;
 let editingIndex = null;
 
+// --- Blocage du Pull-to-Refresh natif (WebView / Navigateur) ---
+let touchStartClientY = 0;
+
+document.addEventListener('touchstart', (e) => {
+    // On enregistre la position verticale initiale du doigt
+    touchStartClientY = e.touches[0].clientY;
+}, { passive: true });
+
+document.addEventListener('touchmove', (e) => {
+    const touchMoveClientY = e.touches[0].clientY;
+    
+    // Si la page est tout en haut (scrollY === 0) 
+    // ET que le mouvement du doigt descend (touchMoveClientY > touchStartClientY)
+    if (window.scrollY === 0 && touchMoveClientY > touchStartClientY) {
+        // Si l'événement peut être annulé, on bloque le comportement du navigateur/APK
+        if (e.cancelable) {
+            e.preventDefault();
+        }
+    }
+}, { passive: false });
+
 // --- Fonctions de Stockage & Rendu ---
 function saveMovies() {
     localStorage.setItem('movies', JSON.stringify(movies));
